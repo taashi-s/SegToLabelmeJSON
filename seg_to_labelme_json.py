@@ -76,7 +76,7 @@ def get_points_from_mask_img(mask_file):
         return []
     contor_id = get_first_contor_id(hierarchy[0])
     _, _, masks = follow_contor(contor_id, hierarchy[0], contours)
-    return masks[0]
+    return masks
 
 
 def get_image_ext_pathes(base_path):
@@ -119,8 +119,9 @@ if __name__ == '__main__':
             created_json_count += save_shape_to_json(original_name, shapes)
             original_name = name_parts[ORG_IMG_NAME_INDEX]
             shapes = []
-        points = get_points_from_mask_img(mask_file)
-        shapes.append(LabelmeJSONShape(name_parts[LABEL_NAME_INDEX], points=points))
+        points_list = get_points_from_mask_img(mask_file)
+        for points in points_list:
+            shapes.append(LabelmeJSONShape(name_parts[LABEL_NAME_INDEX], points=points))
         pbar.update(1)
     created_json_count += save_shape_to_json(original_name, shapes)
     pbar.close()
