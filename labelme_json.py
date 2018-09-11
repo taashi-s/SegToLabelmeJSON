@@ -31,7 +31,8 @@ class LabelmeJSON():
         if os.path.exists(img_path):
             self.__json[self.KEY_IMG_PATH] = os.path.basename(img_path)
             with open(self.__img_path, 'rb') as f:
-                img_base64 = base64.encodestring(f.read())
+                #img_base64 = base64.encodestring(f.read())
+                img_base64 = base64.encodebytes(f.read())
             self.__json[self.KEY_IMG] = img_base64.decode('utf8')
 
 
