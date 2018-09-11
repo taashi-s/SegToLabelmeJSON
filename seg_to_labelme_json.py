@@ -124,10 +124,8 @@ def get_points_from_mask_img(mask_file):
 
 
 def binary_gray_image(img, th):
-    print('bfo : ', np.min(img), ', ', np.max(img))
     img[img < th] = 0
     img[img != 0] = 255
-    print('aft : ', np.min(img), ', ', np.max(img))
     return img
 
 
