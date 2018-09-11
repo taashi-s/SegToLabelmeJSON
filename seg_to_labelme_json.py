@@ -12,6 +12,7 @@ BASE_DIR = os.path.join('.', 'data')
 ORG_DIR = os.path.join(BASE_DIR, 'images')
 MSK_DIR = os.path.join(BASE_DIR, 'masks')
 IMAGE_EXTENTAIONS = ['.png', '.jpg', '.jpeg']
+MASK_BINARY_THRESHOLD = 1
 
 NONE_ID = -1
 USE_CHAIN_APPROX = cv2.CHAIN_APPROX_TC89_KCOS
@@ -111,6 +112,7 @@ def get_distances(arr_a, arr_b):
 def get_points_from_mask_img(mask_file):
     mask_img = cv2.imread(mask_file)
     mask_img_gray = cv2.cvtColor(mask_img, cv2.COLOR_BGR2GRAY)
+    mask_img_gray = binary_gray_image(mask_img_gray, MASK_BINARY_THRESHOLD)
     _, contours, hierarchy = cv2.findContours(mask_img_gray, cv2.RETR_CCOMP, USE_CHAIN_APPROX)
     if hierarchy is None:
         return []
@@ -119,6 +121,14 @@ def get_points_from_mask_img(mask_file):
     contor_id = get_first_contor_id(hierarchy[0])
     _, _, masks = follow_contor(contor_id, hierarchy[0], contours)
     return masks
+
+
+def binary_gray_image(img, th):
+    print('bfo : ', np.min(img), ', ', np.max(img))
+    img[img < th] = 0
+    img[img != 0] = 255
+    print('aft : ', np.min(img), ', ', np.max(img))
+    return img
 
 
 def get_image_ext_pathes(base_path):
