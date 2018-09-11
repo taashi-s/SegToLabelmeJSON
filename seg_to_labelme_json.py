@@ -2,6 +2,7 @@ import os
 import numpy as np
 import cv2
 import glob
+from operator import itemgetter
 from tqdm import tqdm
 
 from labelme_json import LabelmeJSON, LabelmeJSONShape
@@ -41,6 +42,7 @@ def follow_contor(contor_id, hierarchy, contours, disp_prefix='- ', is_inside=Fa
     #print(disp_prefix, ' %03d : ' % contor_id, contor_info)
 
     contour = contours[contor_id]
+    contour = np.squeeze(contour, axis=1)
     cnts = []
     child_ids = []
     child_contours = []
@@ -57,13 +59,53 @@ def follow_contor(contor_id, hierarchy, contours, disp_prefix='- ', is_inside=Fa
         cnts += next_cnts
 
     if not is_inside:
-        cnt = np.concatenate([contour] + child_contours)
-        cnt = np.squeeze(cnt, axis=1)
+        cnt = insert_child_contours(contour, child_contours)
         cnts.append(cnt.tolist())
 
     same_tier_ids = [contor_id] + next_ids
     same_tier_contours = [contour] + next_contours
     return same_tier_ids, same_tier_contours, cnts
+
+
+def insert_child_contours(contour, child_contours):
+    insert_indexes = []
+    start_indexes = []
+    for child_contour in child_contours:
+        if len(child_contour) < 1:
+            continue
+        insert_index, start_index = get_closest_points_indexes(contour, child_contour)
+        insert_indexes.append(insert_index)
+        start_indexes.append(start_index)
+
+    child_cnts_with_ins_idx = list(zip(insert_indexes, start_indexes, child_contours))
+    child_cnts_with_ins_idx.sort(key=itemgetter(0))
+    child_cnts_with_ins_idx.reverse()
+    cnts = contour.copy()
+    for ins_idx, st_idx, child_cnt in child_cnts_with_ins_idx:
+        ins_cnt = np.concatenate([child_cnt[st_idx:], child_cnt[:st_idx]])
+        cnts = np.concatenate([cnts[:ins_idx+1], ins_cnt, ins_cnt[0:1], cnts[ins_idx:]])
+    return cnts
+
+
+def get_closest_points_indexes(contour_a, contour_b):
+    a_count = len(contour_a)
+    b_count = len(contour_b)
+    tile_a = np.concatenate([contour_a]*len(contour_b))
+    tile_b = np.tile(contour_b, len(contour_a))
+    tile_b = np.reshape(tile_b, np.shape(tile_a))
+    distances = get_distances(tile_a, tile_b)
+    ins_idx = np.argmin(distances)
+    a_idx = ins_idx % a_count
+    b_idx = ins_idx // a_count
+    return a_idx, b_idx
+
+
+def get_distances(arr_a, arr_b):
+    diff_x = arr_a[:, 0] - arr_b[:, 0]
+    diff_y = arr_a[:, 1] - arr_b[:, 1]
+    diff_x *= diff_x
+    diff_y *= diff_y
+    return np.sqrt(diff_x + diff_y)
 
 
 def get_points_from_mask_img(mask_file):
