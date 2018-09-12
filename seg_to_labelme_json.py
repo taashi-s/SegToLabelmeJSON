@@ -146,7 +146,7 @@ def save_shape_to_json(original_name, shapes):
     return created_count
 
 
-if __name__ == '__main__':
+def execute():
     mask_files = get_image_ext_pathes(os.path.join(MSK_DIR, '*'))
     mask_files.sort()
 
@@ -176,4 +176,11 @@ if __name__ == '__main__':
     created_json_count += save_shape_to_json(original_name, shapes)
     pbar.close()
 
+    print('')
     print('### Created JSON : ', created_json_count, ' files')
+
+
+
+
+if __name__ == '__main__':
+    execute()
